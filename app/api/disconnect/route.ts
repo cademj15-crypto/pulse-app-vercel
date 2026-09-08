@@ -1,0 +1,4 @@
+export const dynamic = "force-dynamic";
+import {cookies} from 'next/headers';
+import {identity,getSession,sameOrigin,cookieOptions} from '@/lib/google-health';
+export async function POST(req:Request){if(!await identity()||!sameOrigin(req))return new Response('Unauthorized',{status:403});const s=await getSession();if(s){try{const r=await fetch('https://oauth2.googleapis.com/revoke',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({token:s.refresh??s.access}),signal:AbortSignal.timeout(15000)});if(!r.ok&&r.status!==400)return Response.json({error:'Could not revoke access. Try again.'},{status:502})}catch{return Response.json({error:'Could not revoke access. Try again.'},{status:502})}}const jar=await cookies();jar.set('pulse-session','',{...cookieOptions,maxAge:0});jar.set('pulse-oauth','',{...cookieOptions,maxAge:0});return Response.json({disconnected:true},{headers:{'Cache-Control':'no-store'}})}
